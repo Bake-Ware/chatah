@@ -1,0 +1,355 @@
+<html ng-app="chat" onpaste="paste(event);">
+<head>
+	<title>NODECHATAH</title>
+	<script>
+		if( navigator.userAgent.match(/Android/i)
+		 || navigator.userAgent.match(/webOS/i)
+		 || navigator.userAgent.match(/iPhone/i)
+		 || navigator.userAgent.match(/iPad/i)
+		 || navigator.userAgent.match(/iPod/i)
+		 || navigator.userAgent.match(/BlackBerry/i)
+		 || navigator.userAgent.match(/Windows Phone/i)
+		 ){
+			window.location = "/mobile.html";
+		  }
+	</script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.js"></script>
+		<script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.5.0.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="lib/parse_str.js"></script>
+	<script type="text/javascript" src="lib/client.js"></script>
+	<script type="text/javascript" src="lib/traffic.js"></script>
+	<script type="text/javascript" src="lib/emotes.js"></script>
+	<script type="text/javascript" src="lib/jquery.easing.1.3.js"></script>
+	<script type="text/javascript" src="lib/kinetic-v5.0.0.min.js"></script>
+	<script type="text/javascript" src="lib/canvas.js"></script>
+	<script type="text/javascript" src="lib/uploads.js"></script>
+<!--    <script type="text/javascript" src="lib/jquery.event.drag-2.0.js"></script>-->
+    
+	<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="css/main.css"/>
+	<link rel="stylesheet" type="text/css" href="css/menu.css"/>
+    
+    <link href='http://fonts.googleapis.com/css?family=Marvel' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Play' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=IM+Fell+English+SC|Nosifer|Permanent+Marker|New+Rocker|Sonsie+One|Fredericka+the+Great|Cabin+Sketch|Caesar+Dressing|Marck+Script|Swanky+and+Moo+Moo|Nova+Mono|Atomic+Age|Shojumaru|Butcherman|Reenie+Beanie|Shadows+Into+Light|Finger+Paint|Source+Code+Pro|Metal+Mania|Just+Me+Again+Down+Here|Geostar+Fill|Monoton|Droid+Serif|Special+Elite|Pacifico|Vollkorn|Chewy|Rock+Salt|Black+Ops+One|Satisfy|Electrolize|Orbitron|Hammersmith+One|Bangers|Geo|Lemon|Kranky|Press+Start+2P|MedievalSharp|Creepster|Wallpoet|Balthazar|Freckle+Face|Plaster' rel='stylesheet' type='text/css'>
+
+</head>
+<body>
+<article><!-- our canvas will be inserted here--></article>
+<div id='thumbnail' class='thumbnail' style="background-color: rgba(0,0,0,0.5);z-index:6;overflow:auto">
+			<img style="margin-left: auto ;  margin-right: auto ; margin:10% auto;box-shadow: 3px 3px 3px 0px #000;" height='50%' id="pastedImage"/><br>
+			<input type='button' value='Upload canvas' onclick='uploadcanvas();'/>
+</div> 
+
+<div id="register">
+<h1 style="left:-57px;top:-43px;color:rgba(100,100,100,0.9);z-index:-1;"><b>REGISTRATE</b></h1>
+<!--	<form id="regform" autocomplete="on">-->
+		<input id="rusername" name="rusername" required="required" type="text" placeholder="Username"/><br>
+        <input id="rpass" name="rpass" required="required" type="text" placeholder="Password"/><br>
+		<input id="rpassconf" name="rpassconf" required="required" type="text" oninput="($(this).val() == $('#rpass').val() ? this.setCustomValidity('') : this.setCustomValidity('The two passwords must match.'));" placeholder="Confirm Password"/><br>
+		<input id="remail" name="remail" type="text" placeholder="Email Address"/><br>
+		<input id="ravatar" name="ravatar" type="text" placeholder="Avatar URL"/><br>
+		<input type="button" onclick="register()" class="menubutton" style="width:100%;height:40px;" value="Sign up"/><br><br>
+		<input type="button" onclick="$('#register').hide('slow','easeOutBounce');" class="menubutton" style="width:100%;height:30px;" value="Nevermind"/>
+<!--	</form>-->
+</div>
+<div id="nickWrap" style="display:none;">
+    <h1 style="left:-172px;top:-42px;color:rgba(100,100,100,0.9);z-index:-1;"><b>LOGIN</b></h1>
+    <!-- <p>Enter a username:</p> -->
+    <p id="nickError"></p>
+<form id="setNick">
+        <!-- Username:  --><input type="text" style="width:276px;" required="required" id="nickname" autofocus placeholder="username"/><br>
+        <!-- Password:  --><input type="password" required="required" style="width:276px;" id="password" placeholder="password"/><br>
+        <input type="submit" class="menubutton" style="width:49%;height:40px;" value="Log in"/>
+        <input type="button" class="menubutton" style="width:49%;height:40px;" value="Register" onclick="$('#register').show('slow','easeOutBounce'); $('#rusername').focus();"/><br>
+    <a class="menubutton" href="http://bakechat.com/Chatahnet/nightly/publish.htm" target="_blank" style="height: 40px;width: 180px;margin-top: 10px;">Feelin frisky cupcake?<br>Try the desktop client beta!</a>
+</form>
+</div>
+	
+			<div id="fish">
+		<div id="fishcont">
+		<h1>Logging in</h1>
+		<img src="images/chatah.png" class="notrans" height="500" width="500" style="height:90%;width:90%;box-shadow: 0px 0px 0px 0px #000;" />
+		</div>
+		</div>
+	<div id="CAH">
+	Captions Against Humanity <input type="button" value="Start" onclick="startCAH();">
+	<input type="button" value="Hide" onclick="$('#CAH').hide();"><br>
+		<div id="question"></div>
+		<div id="answer"></div>
+	</div>
+	<div id="contentWrap">
+		<div id="chatWrap" ng-controller="TabsParentController" class="tabheader">
+            <div style="position: fixed;  top: -10px;  left: 0;  right: 0;  text-align: center;"><h3 id="chattitle">Chatah</h3></div>
+            <div id="commands" style="display:none"></div>
+            <div id="chat"></div>
+            <div id="preview"></div>
+	</div>
+
+		<div class="messagesdivold" style="display:none;">
+<!--
+			<form id="send-message"><br>
+				<input id='submit' type="submit"/>
+			</form>
+-->
+		</div>
+		
+		<div id="userscont">
+		<div id="useravatarcont">
+		    <ul class="cssMenu">
+        <li>
+					<img id="useravatar" src="" onclick="toggleMode()"/>
+            <ul>
+                <li><a href="#">Font settings</a>
+		            <ul>
+						<li><a href="#">Font size</a>
+							<ul>
+								<li>
+									<select id="txtsize" class="menuinput" onchange="savesettings();">
+									<option>Whisper</option>
+									<option>Tiny</option>  
+									<option>Small</option>
+									<option>Medium</option>
+									<option>Large</option>
+									<option>Huge</option>
+									<option>Supermassive</option>
+									<option>STOP YELLING AT ME!</option>
+									</select>
+								</li>
+							</ul>
+						</li>
+						<li><a href="#">Font color</a>
+							<ul><li>
+								<input type='color' id='ptxtcolor' class="menuinput" onchange="$('#message').css('color',$('#ptxtcolor').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>Panel font
+							<ul><li>
+								<input type='color' id='ppanelcolor' class="menuinput" onchange="$('#messagesdiv').css('background-color',$('#ppanelcolor').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li><a href="#">Font face</a>
+							<ul><li>
+								<select id="txtfont" class="menuinput" onchange="savesettings();"><option>courier</option><option>courier new</option><option>terminal</option>  <option>verdana</option><option>arial</option><option>arial black</option><option>modern</option><option>times new roman</option><option>comic sans ms</option><option>impact</option><option>candara</option><option>Play</option><option>Marvel</option><option>marlett</option><option>Ubuntu</option><option>IM Fell English SC</option><option>Nosifer</option><option>Permanent Marker</option><option>New Rocker</option><option>Sonsie One</option><option>Fredericka the Great</option><option>Cabin Sketch</option><option>Caesar Dressing</option><option>Marck Script</option><option>Swanky and Moo Moo</option><option>Nova Mono</option><option>Atomic Age</option><option>Shojumaru</option><option>Butcherman</option><option>Reenie Beanie</option><option>Shadows Into Light</option><option>Finger Paint</option><option>Source Code Pro</option><option>Metal Mania</option><option>Just Me Again Down Here</option><option>Geostar Fill</option><option>Monoton</option><option>Droid Serif</option><option>Special Elite</option><option>Pacifico</option><option>Vollkorn</option><option>Chewy</option><option>Rock Salt</option><option>Black Ops One</option><option>Satisfy</option><option>Electrolize</option><option>Orbitron</option><option>Hammersmith One</option><option>Bangers</option><option>Geo</option><option>Lemon</option><option>Kranky</option><option>Press Start 2P</option><option>MedievalSharp</option><option>Creepster</option><option>Wallpoet</option><option>Balthazar</option><option>Freckle Face</option><option>Plaster</option></select>
+							</li></ul>
+						</li>
+						<li style="text-align:right;">Bold <input class="menuinput" type='checkbox' id='bold' title='Set bold text' onchange="savesettings();"/></li>
+						<li style="text-align:right;">Italic <input class="menuinput" type='checkbox' id='italic' title='Set italic text'  onchange="savesettings();"/></li>
+						<li style="text-align:right;">Underline <input class="menuinput" type='checkbox' id='underline' title='Set underlined text'  onchange="savesettings();"/></li>
+						<li style="text-align:right;">Raw HTML <input class="menuinput" type='checkbox' id='raw' title="Don't resolve macros"  onchange="savesettings();"/></li>
+					</ul>
+				</li>
+                <li><a href="#">Message Styles</a>
+					<ul>
+						<li>Icon size
+							<ul><li>
+								<select id="iconsize" class="menuinput" onchange="savesettings();">
+									<option>None</option>
+									<option>Small</option>  
+									<option>Large</option>
+								</select>
+							</li></ul>
+						</li>
+						<li>Bar Size
+							<ul><li>
+								<select id="barsize" class="menuinput" onchange="savesettings();" >
+									<option>Win 95</option>
+									<option>Simple</option>  
+									<option>Pretty</option>
+								</select>
+							</li></ul>
+						</li>
+						<li>Bubble Type
+							<ul><li>
+								<select id="bubbletype" class="menuinput"  onchange="savesettings();">
+									<option>Modern</option>
+									<option>Comic Book</option>  
+									<option>Square</option>
+									<option>No Thanks</option>
+									<option>Glass</option>
+									<option>Warcraft</option>
+									<option>CMD</option>
+								</select>
+							</li></ul>
+						</li>
+						<li>Avatar
+							<ul style="width:500%;"><li>
+								<input type='text' class="menuinput" id='avatarurl' onchange="$('#useravatar').attr('src',$('#avatarurl').val()).attr('height','60'); socket.emit('save avatar', $('#avatarurl').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>barvatar
+							<ul style="width:500%;"><li>
+								<input type='text' class="menuinput" id='barvatarurl' onchange="$('#useravatarcont').css('background-image','url(' + $('#barvatarurl').val() + ')'); socket.emit('save barvatar', $('#barvatarurl').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>Wallpaper
+							<ul style="width:500%;"><li>
+								<input type='text' class="menuinput" id='wallpaperurl' onchange="$('#chat').css('background','url(' + $('#wallpaperurl').val() + ') no-repeat center center fixed').css('background-size, -webkit-background-size, -moz-background-size, -o-background-size','cover'); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>Display user styles
+							<input type='checkbox' class="menuinput" id='userstyle' title="See posts in the poster's style" onchange="savesettings();"/>
+						</li>
+						<li>Display usernames 
+							<input type='checkbox' class="menuinput" id='showusernames' title="Show usernames in chat" onchange="savesettings();"/>
+						</li>
+						<li>Hours of history
+							<ul style="width:200px;"><li>
+								<input type="range" style="width:150px;" id="history" min="1" max="72" class="menuinput" onchange="$('#result').html($('#history').val())" onmouseup="savesettings();"><span id="result"></span>
+							</li></ul>
+						</li>
+					</ul>
+				</li>
+                <li><a href="#">Colors</a>
+					<ul>
+						<li>Background
+							<ul><li>
+								<input type='color' id='pbgcolor' class="menuinput" onchange="$('body').css('background-color',$('#pbgcolor').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>Bubble
+							<ul><li>
+								<input type='color' id='pbubblecolor' class="menuinput" onchange="$('#message').css('background-color',$('#pbubblecolor').val()); savesettings();"/>
+							</li></ul>
+						</li>
+						<li>Bar
+							<ul><li>
+								<input type='color' id='pbarcolor' class="menuinput" onchange="savesettings();"/>
+							</li></ul>
+						</li>
+					</ul>
+				</li>
+				<li><a href="#">My info</a>
+					<ul>
+					<li>Email
+						<ul style="width:150%;"><li>
+							<form id="emailform">
+								<input type="email" id="email">
+								<input type="submit" class="menubutton" value="Save">
+							</form>
+						</li></ul>
+					</li>
+					<li>Password
+						<ul style="width:150%;height:60px"><li style="height:60px">
+							 <form id="passwordform">
+								<input id="newpassword" name="newpassword" required="required" type="text" placeholder="New Password"/><br>
+								<input id="confirmnewpassword" name="confirmnewpassword" required="required" type="text" oninput="($(this).val() == $('#newpassword').val() ? this.setCustomValidity('') : this.setCustomValidity('The two passwords must match.'));" placeholder="Confirm New Password"/>
+								<input type="submit" class="menubutton" value="Save">
+							</form>
+						</li></ul>
+					</li>
+					</ul>
+				</li>
+            </ul>
+        </li>
+    </ul>
+
+		
+		</div>
+			<div id="users">
+			
+			</div>
+		<div id="usertools"></div>
+		</div>
+			<div id="whispercontainer">
+			<div id="hidewhispers" onclick="$('#whispercontainer').hide('slow','easeOutBounce');">Hide</div>
+			<div id="whispers"></div>
+			</div>
+	</div>
+<div id='messagesdiv' class='messagesdiv' style="display:none;background-color:rgba(60%, 60%, 60%, 0.9);">
+<div class="messagedivtab">
+
+    <div class="uploadcontainer">
+<div class="row">
+<div class="span12">
+<form method="post" action="/">
+<legend style="color:#CCC;">Upload files to chatah!</legend>
+<input type="file" name="myFile" id="myFile">
+<p>
+</p>
+<div class="form-actions">
+<input type="submit" value="Submit" id="btnsubmitupload" class="btn btn-primary">
+</div>
+</form>
+</div>
+</div>
+<hr>
+<div class="row">
+<div class="span12">
+<div class="progress progress-striped active hide">
+<div style="width: 0%" class="bar">
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="span12">
+<div class="alert hide">
+<button type="button" data-dismiss="alert" class="close">x</button>
+<span>
+<strong class="message">
+</strong>
+</span>
+</div>
+</div>
+</div>
+</div>
+
+    <div class="renamecontainer">
+    <input id="renameInput"/><button id="sendRename">Rename Chat</button>
+    </div>
+    
+<img class="messageTool" src="images/fire.png" style="
+    height: 30px;
+    position: absolute;
+    left: -20px;
+    top: -20px;
+    background-color: silver;
+    border-radius: 3px;"
+ onclick="$('.renamecontainer').hide('slow','easeOutBounce',function(){$('.uploadcontainer').toggle('slow','easeOutBounce');});"
+ title="Upload files"
+ />
+    
+    <img class="messageTool" src="images/rename.png" style="
+        height: 26px;
+        position: absolute;
+        left: -20px;
+        top: 10px;
+        background-color: silver;
+        border-radius: 3px;"
+     onclick="$('.uploadcontainer').hide('slow','easeOutBounce',function(){$('.renamecontainer').toggle('slow','easeOutBounce');});"
+     title="Rename Chat"
+     />
+	<div id="totagcontainer" style="display:none;">
+	<div style="
+    position: absolute;
+    left: 513;
+    background-color: #111;
+    padding: 0px 8px;
+    z-index: 3;
+    border-radius: 50px;
+    font-size: small;
+    border: 1px solid #aaa;
+    top: -6px;
+    color: white;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-bottom-color: #111;
+"
+onclick="killwhisper()">x</div>
+		<div class="whisper" id="totag" style="position: absolute;left: 510px;width: auto;display: inline-table;top: 11px;">
+			To BAKE:
+		</div>
+		<input type="hidden" id="hdnwspr"/>
+	</div>
+</div>
+	<form id="send-message" >
+	
+	<textarea rows="1" cols="50" name="message" id="message" class='message' onkeydown="keyHandler(event);" onkeyup='makeTags();' ></textarea><br/>
+	</form>
+</div>
+</body>
+</html>

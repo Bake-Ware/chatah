@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
+<html>
+<head>
+		<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.js"></script>
+		<script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.5.0.js"></script>
+		<script type="text/javascript" src="lib/parse_str.js"></script>
+        <script type="text/javascript" src="lib/uploads.js"></script>
+        <script src="socket.io/socket.io.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+<style>
+body{
+height:100%;
+width:100%;
+overflow-y: scroll;
+overflow-x: hidden;
+background-color:silver;
+margin:1px;
+}
+.avataricon{
+height:20px;
+padding-right:3px;
+}
+.uavataricon{
+height:14px;
+padding-right:3px;
+}
+#users{
+position:fixed;
+top:0px;
+right:10px;
+background-color:silver;
+padding:3px;
+font-size:x-small;
+border:1px solid black;
+}
+.innerbubble{
+padding:5px;
+border:1px solid black;
+display:block;
+}
+.bubble{
+padding:5px;
+border:1px solid black;
+margin-top:1px;
+}
+#message{
+width:98%;
+margin:0px;
+}
+.timestamp, .system{
+font-size:x-small;
+}
+#post{
+    margin:0px;
+    width:78%;
+    height:40px;
+}
+#file{
+    margin:0px;
+    width:20%;
+    height:40px;
+}
+#msgdiv{
+position:fixed;
+bottom:0px;
+margin:0px;
+width:100%;
+background-color:silver;
+height:100px;
+}
+#chat{
+margin-bottom:100px;
+}
+.youtube{
+height:200px;
+}
+.container{
+    position: fixed;
+    bottom: 200px;
+    right: 20px;
+    width: 300px;
+    display: none;
+    background-color:rgba(50,50,50,0.6);
+    padding:15px;
+}
+.span12{
+    width: 300px;
+}
+    img{
+    height:50px;
+    }
+</style>
+<script>
+  var socket = io.connect(window.location.origin);
+  socket.on('connect', function (data) {
+    console.log('connected!');
+  });
+  
+  jQuery(function($){
+  
+  var $nickBox = $('#nickname');
+  var $password = $('#password');
+    });
+	
+	function login(){
+	socket.emit('new user', { nickname: $('#nickname').val(),password: $('#password').val()}, function(data){
+	if(data.ok == true){
+			var avatar = data.useravatar;
+			if(avatar.indexOf("http://") == -1){
+				avatar = window.location.origin + "/" + avatar;
+			}
+			console.log(avatar);
+			//$("#useravatar").attr('src',avatar).attr('height','60');
+			$('#loginBox').fadeOut('slow');
+			$('#msgdiv').fadeIn('slow');
+			}
+		});
+	};
+	
+	socket.on('usernames', function(data){
+				var html = '';
+				var inGuestList = false;
+					 for(var i=0; i < data.length; i++){
+						if(data[i].name == $('#nickname').val()) {
+								inGuestList = true;
+							}
+							var classname = "username";
+							if(data[i].online == 1){ classname = "username"; }
+							if(data[i].online == 2){ classname = "away"; }
+							console.log(data[i].name + " - online status - " + data[i].online);
+							if(data[i].avatar.indexOf("http://") == -1){
+								data[i].avatar = window.location.origin + "/" + data[i].avatar;
+							}
+							html += "<div class='" + classname + "' onclick=\"makeWhisper('" + data[i].name + "'); message.focus();\"><img class='uavataricon' src='" + data[i].avatar + "' />" + data[i].name + "</div>";
+						}
+					// }
+				$('#users').html(html);
+				if(!inGuestList){
+				 //alert("Your connection to the server has been lost")
+					//location.reload();
+				}
+
+			});
+			
+			socket.on('new message', function(data){
+				displayMsg(data);
+				//msgsnd.play();
+				scrolldown();
+			});
+			
+			function displayMsg(data){
+				var pref = {};
+				parse_str(data.prefs, pref); 
+								
+				$('#chat').append('<div id="' + data.id + '"class="bubble" style="background-color:' + 
+								pref['barcolor'] + ';color:' + (pref['panelcolor'] == pref['barcolor'] ? $("#txtfont option").eq(pref['txtfont']).val() : pref['panelcolor']) + 
+								';">' + 
+								'<img class="avataricon" src="' + 
+								data.avatar + 
+								'" height="30px" /><b onclick=\"makeWhisper(\'' + 
+								data.nick + " " + 
+								'\'); message.focus();\">' + 
+								data.nick + 
+								": </b><span class='timestamp'>" + 
+								data.timestamp.split(" ").join("@") + 
+								'</span><span class="innerbubble" style="background-color:' + pref['bubble'] + 
+								';color:' + pref['txtcolor'] + 
+								';font-family:' + $("#txtfont option").eq(pref['txtfont']).val() + 
+								';">' + 
+								data.msg + 
+								"</span></div>"
+								);
+				
+	            window.top.document.title = data.nick + " posted";
+				//setpageicon(data.avatar);
+				scrolldown();
+			}
+			
+			function resolveimg(img){
+			if(img.indexOf("http://") == -1){
+				img = window.location.origin + "/"  + img;
+			}
+			return img;
+			}
+			
+			function post(){
+			if($('#message').val() == "")
+			return;
+			socket.emit('send message', $('#message').val(), function(data){
+					$('#chat').append('<span class="error">' + data + "</span><br/>");
+					//msgsnd.play();
+					scrolldown();
+					});
+				$('#message').val('');
+			}
+			
+			socket.on('system', function(data){
+				$('#chat').append('<span class="system">' + data.msg + "</span><br/>");
+				scrolldown();
+			});	
+			
+			function scrolldown(){
+			window.scrollTo(0,document.body.scrollHeight);
+			}
+</script>
+</head>
+<body>
+<div id='loginBox'>
+<input id='nickname' placeholder="Username">
+<input id='password' placeholder="Password">
+<button id='login' onclick="login()">click the shit out of this button</button>
+</div>
+<div id='chat'></div>
+<div id='msgdiv' style='display:none;'>
+<!-- <img id='useravatar' src=''/> -->
+<textarea rows="3" name="message" id="message" class='message' ></textarea>
+<button id='post' onclick='post()'>POST</button>
+<button id="file" onclick="$('.container').toggle()">Upload</button>
+    
+    <div class="container">
+<div class="row">
+<div class="span12">
+<form method="post" action="/">
+<legend style="color:#CCC;">Upload files to chatah!</legend>
+<input type="file" name="myFile" id="myFile">
+<p>
+</p>
+<div class="form-actions">
+<input type="submit" value="Submit" class="btn btn-primary">
+</div>
+</form>
+</div>
+</div>
+<hr>
+<div class="row">
+<div class="span12">
+<div class="progress progress-striped active hide">
+<div style="width: 0%" class="bar">
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="span12">
+<div class="alert hide">
+<button type="button" data-dismiss="alert" class="close">x</button>
+<span>
+<strong class="message">
+</strong>
+</span>
+</div>
+</div>
+</div>
+</div>
+    
+<div id='users'>
+</div>
+</div>
+</body>
+</html>

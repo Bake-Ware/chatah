@@ -1,0 +1,114 @@
+/*
+settings menu css
+*/
+
+ul
+{
+	animation:showList 5s;
+	-webkit-animation:showList 0.5s; 
+	-webkit-transform-origin: top center;
+}
+
+@keyframes showList
+{
+	from {opacity:0;}
+	to {opacity:0.7;}
+}
+
+@-webkit-keyframes showList
+{
+	0% {-webkit-transform:rotateX(90deg);}
+	100% {-webkit-transform:rotateX(0deg);}
+}
+
+ul.cssMenu, ul.cssMenu ul
+{
+	list-style:none;
+	margin:0; padding:0;
+	position: relative;
+}
+
+/*Style for 1st level menu header*/
+ul.cssMenu li
+{ 
+	position: relative; 
+	float: left; 
+	zoom: 1; /*Needed for IE*/
+	background: #DDDDDD; /*background color of menu header (1st level)*/
+}
+ul.cssMenu li:hover
+{ 
+	background: #AAAAAA /*background color of menu header (1st level) on hover*/; 
+}
+ul.cssMenu li a
+{
+	/*Menu link styles*/
+	display: block; 
+	padding: 5px; 
+	color:#000000;
+	font-family: Arial, Times New Roman, Tahoma;
+	font-size: 12px;
+}
+
+/* Building menu items - for 2nd and more level menu items*/
+ul.cssMenu ul 						
+{ 
+	display:none; /*initially menu item is hidden*/
+	position: absolute; /*absolute positioning is important for menu to float*/
+	width: 150px; 
+	/*Formating of menu items*/
+	border:1px solid #AAAAAA;
+	padding:1px;
+	background:#FFFFFF;
+	
+	/*optional - to change position of 2nd level menu item*/
+	top: 100%; 
+	right:-30px; 
+	-webkit-border-radius: 10px;
+	-webkit-border-top-right-radius: 0;
+	-moz-border-radius: 10px;
+	-moz-border-radius-topright: 0;
+	border-radius: 10px;
+	border-top-right-radius: 0;
+	padding:10px;
+}
+ul.cssMenu ul li
+{ 
+	height:40px;
+	background: #F5F5F5; 
+	color: #000; 
+	border-bottom: 1px solid #DDDDDD; 
+	float: none; 
+	-webkit-border-top-left-radius: 10px;
+	-webkit-border-bottom-left-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-bottomleft: 10px;
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+	
+	text-align:center;
+}
+.menuinput{
+	width:90%;
+	height:30px;
+	margin:5px;
+}
+ul.cssMenu ul li a
+{ 
+	width: 100%; 
+	display: block; 
+	color:#000000;
+} 
+
+/* Menu item position for 3rd level and more */
+ul.cssMenu ul ul
+{ 
+	right:100%; 
+	top: 0; 
+}
+
+/* Hover effect for menu*/
+ul.cssMenu li:hover > ul 			
+{ 
+	display:block;
+}
