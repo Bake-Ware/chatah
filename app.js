@@ -24,8 +24,26 @@ var express = require('express'),
     lastCommand = "";
 // Globals==============================================================================
 	
+// Configs==============================================================================
+var web_servername = "localhost",
+    web_port = "80",
+    web_upload_directory = "/uploads",
+    web_upload_sizelimit = "900mb",
+    web_upload_rootpath = "C:\\Program Files\\nodejs\\",
+    sql_servername = "localhost",
+    sql_port = "3306",
+    sql_database = "chat",
+    sql_username = "root",
+    sql_password = "password",
+    tbl_chat = "chat",
+    tbl_users = "users",
+    tbl_memchat = "memchat",
+    tbl_userveiw = "vw_users2";
+    
+// Configs==============================================================================
+
 //Start HTTP server==============================================================================
-server.listen(3000);
+server.listen(web_port);
 	//Serve documents==============================================================================
   app.configure(function() {
   var hourMs = 1000*60*60;
@@ -34,8 +52,8 @@ server.listen(3000);
   app.use(express.errorHandler());
   app.use(express.bodyParser({ 
     keepExtensions: true, 
-    uploadDir: __dirname + '/uploads',
-    limit: '900mb'
+    uploadDir: __dirname + web_upload_directory,
+    limit: web_upload_sizelimit
   }));
   app.use(express.methodOverride());
   app.use(app.router);
@@ -47,11 +65,11 @@ server.listen(3000);
 // Database connection info==============================================================================
 function connect(){
 var connection = mysql.createConnection({
-  host     : 'localhost',
-  port : 3306,
-  database: 'chat',
-  user     : 'root',
-  password : 'password',
+  host     : sql_servername,
+  port : sql_port,
+  database: sql_database,
+  user     : sql_username,
+  password : sql_password,
 });
 return connection;
 }
@@ -85,13 +103,13 @@ gsocket = socket; // push to global
 app.post('/', function(req, res) {
     colog.info(Timestamp() + "File uploaded: " + req.files.myFile.path);
     var filepath = req.files.myFile.path;
-    res.send(filepath.replace("C:\\Program Files\\nodejs\\",""));
+    res.send(filepath.replace(web_upload_rootpath,""));
   res.end();
 });
 //Handle Uploads==============================================================================
     
 socket.on('register', function(data, callback){
-	connection.query("SELECT * FROM users where username = '" + data.nickname + "'", function(err, rows){
+	connection.query("SELECT * FROM " + tbl_users + " where username = '" + data.nickname + "'", function(err, rows){
 		if(err != null) {
 			colog.error(Timestamp() + "Query error:" + err);
 		} else {
@@ -118,23 +136,23 @@ connection.query("INSERT INTO users (username,password,prefs,avatar,email,alive)
 });
 
 socket.on("plusone", function(data){
-connection.query("SELECT score FROM users where username = '" + data + "'", function(err, rows){
+connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
 		if(err != null) {
 			colog.error(Timestamp() + "Query error:" + err);
 		} else {
 		var newscore = rows[0].score++
-			connection.query("UPDATE users set score = " + newscore + " where username = '" + data + "'");
+			connection.query("UPDATE " + tbl_users + " set score = " + newscore + " where username = '" + data + "'");
 		}
 		}
 )});
 
 socket.on("subone", function(data){
-connection.query("SELECT score FROM users where username = '" + data + "'", function(err, rows){
+connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
 		if(err != null) {
 			colog.error(Timestamp() + "Query error:" + err);
 		} else {
 		var newscore = rows[0].score--
-			connection.query("UPDATE users set score = " + newscore + " where username = '" + data + "'");
+			connection.query("UPDATE " + tbl_users + " set score = " + newscore + " where username = '" + data + "'");
 		}
 		}
 )});
@@ -155,7 +173,7 @@ callback({ok: false, error: 2});
 }
 else{
 console.log(Timestamp() + 'Authenticating user ' + data.nickname);
-	connection.query("SELECT * FROM users where username = '" + data.nickname + "'", function(err, rows){
+	connection.query("SELECT * FROM " + tbl_users + " where username = '" + data.nickname + "'", function(err, rows){
 		if(err != null) {
 			colog.error(Timestamp() + "Query error:" + err);
 		} else {
@@ -170,7 +188,7 @@ console.log(Timestamp() + 'Authenticating user ' + data.nickname);
 						callback({ok: false, error: 1});
 					} 
 					else{
-					connection.query("UPDATE users set online = 1, alive = NOW(), lastpost = NOW() where username = '" + data.nickname + "'");
+					connection.query("UPDATE " + tbl_users + " set online = 1, alive = NOW(), lastpost = NOW() where username = '" + data.nickname + "'");
 						callback({ok: true, error: 0, useravatar: rows[0].avatar, barvatar: rows[0].barvatar, prefs: rows[0].prefs, email: rows[0].email});
 						socket.nickname = rows[0].username;
 						socket.avatar = rows[0].avatar;
@@ -198,7 +216,7 @@ console.log(Timestamp() + 'Authenticating user ' + data.nickname);
 	
 //Get history=================================================================================
 function getHistory(name){
-    connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM chat where timestamp >= TIMESTAMPADD(HOUR,-10,NOW()) order by timestamp desc limit 100", function(err, rows){
+    connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM " + tbl_chat + " where timestamp >= TIMESTAMPADD(HOUR,-10,NOW()) order by timestamp desc limit 100", function(err, rows){
         if(err != null) {
             colog.error(Timestamp() + "Query error:" + err);
         } else {
@@ -232,7 +250,7 @@ function getHistory(name){
 //User closes window==============================================================================
 socket.on('disconnect', function(data){
 	if(!socket.nickname) return;
-	connection.query("UPDATE users set online = 0 where username = '" + socket.nickname + "'");
+	connection.query("UPDATE " + tbl_users + " set online = 0 where username = '" + socket.nickname + "'");
 	delete users[socket.nickname];
 	updateNicknames();
 	colog.headerError(Timestamp() + socket.nickname + " logged out");
@@ -250,7 +268,7 @@ function updateNicknames(){
 //    });
 //}
     
-var sql = "SELECT vu.username,vu.online,u.avatar FROM vw_users2 vu JOIN users u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+var sql = "SELECT vu.username,vu.online,u.avatar FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
 var userslist = [];
 connection.query(sql, function(err, rows){ 
 	if(err != null) { 
@@ -282,13 +300,13 @@ var ext = matches[1];
 var data2 = matches[2];
 var buffer = new Buffer(data2, 'base64');
 var filename =  data.username + Date.now() + '.' + ext;
-fs.writeFile('uploads/' + filename, buffer, function(err){
+fs.writeFile(web_upload_directory + '/' + filename, buffer, function(err){
 if (err) { 
 callback('File upload failed: ' + err);
 colog.error(Timestamp() + 'File upload failed: ' + err);
 } else {
-colog.success(Timestamp() + 'File uploaded: http://bakechat.com:3000/uploads/' + filename);
-callback('http://bakechat.com:3000/uploads/' + filename);
+colog.success(Timestamp() + 'File uploaded: http://' + web_servername + ':' + web_port + web_upload_directory + '/' + filename);
+callback('http://' + web_servername + ':' + web_port + web_upload_directory + '/' + filename);
 }
 });
 
@@ -301,7 +319,7 @@ socket.on('keepalive', function(data, callback){
 updateNicknames();
 try	{
 users[socket.nickname].emit('keepalive', true);
-connection.query("UPDATE users set online = 1, alive = NOW() where username = '" + socket.nickname + "'");
+connection.query("UPDATE " + tbl_users + " set online = 1, alive = NOW() where username = '" + socket.nickname + "'");
 }
 catch(e) {
 delete users[socket.nickname];
@@ -314,7 +332,7 @@ callback(true);
 	socket.on('send message', function(data, callback){
 		var msg = data.trim();
 		if(msg == null) { msg = ""; }
-		connection.query("UPDATE users set online = 1, alive = NOW(), lastpost = NOW() where username = '" + socket.nickname + "'");
+		connection.query("UPDATE " + tbl_users + " set online = 1, alive = NOW(), lastpost = NOW() where username = '" + socket.nickname + "'");
 //imgur scrape links=====================================================================================
 // if(msg.indexOf("i.imgur.com/") != -1){
 
@@ -368,9 +386,9 @@ callback(true);
 					prefs = rows[0].prefs;
 					msgID = rows[0].ID;
 					avatar = rows[0].avatar;
-					var sql = "INSERT INTO chat (user, url, file, message, timestamp, misc,source) VALUES (?,?,?,?,NOW(),?,'node')";
-					var sql2 = "INSERT INTO memchat(user,url,file,message,timestamp,misc,id,source) VALUES(?,?,?,?,NOW(),?,(select id from chat order by timestamp desc limit 1),'node')";
-					var sql3 = "DELETE FROM memchat WHERE timestamp not in ( SELECT * FROM ( SELECT timestamp FROM memchat ORDER BY timestamp desc limit 0, 100 ) as t);";
+					var sql = "INSERT INTO " + tbl_chat + " (user, url, file, message, timestamp, misc,source) VALUES (?,?,?,?,NOW(),?,'node')";
+					var sql2 = "INSERT INTO " + tbl_memchat + "(user,url,file,message,timestamp,misc,id,source) VALUES(?,?,?,?,NOW(),?,(select id from chat order by timestamp desc limit 1),'node')";
+					var sql3 = "DELETE FROM " + tbl_memchat + " WHERE timestamp not in ( SELECT * FROM ( SELECT timestamp FROM memchat ORDER BY timestamp desc limit 0, 100 ) as t);";
 					var values = [ rows[0].username, rows[0].barvatar, rows[0].avatar, msg, rows[0].prefs ];
 					
 					connection.query(sql, values, function(err){ 
@@ -388,7 +406,7 @@ callback(true);
 						} 
 					}); 
 				    
-					connection.query("SELECT * FROM memchat WHERE user = '" + socket.nickname + "' order by timestamp desc limit 1 ", function(err, rows){
+					connection.query("SELECT * FROM " + tbl_memchat + " WHERE user = '" + socket.nickname + "' order by timestamp desc limit 1 ", function(err, rows){
 						if(err != null) { colog.error(Timestamp() + "Query error:" + err); } else {
 							try {
 								io.sockets.emit('new message', {
@@ -430,7 +448,7 @@ callback(true);
 
 //Save user settings==============================================================================
 socket.on('save prefs', function(data, callback){
-	connection.query("UPDATE users SET prefs = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
+	connection.query("UPDATE " + tbl_users + " SET prefs = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
         if(err != null) { console.log("Query error:" + err); } 
 		else {
 		users[socket.nickname].emit('system', {msg: "Your setting have been saved", nick: "system"});
@@ -440,7 +458,7 @@ socket.on('save prefs', function(data, callback){
 });
 
 socket.on('save avatar', function(data, callback){
-	connection.query("UPDATE users SET avatar = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
+	connection.query("UPDATE " + tbl_users + " SET avatar = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
         if(err != null) { console.log("Query error:" + err); } 
 		else {
 		users[socket.nickname].emit('system', {msg: "Your avatar has been updated", nick: "system"});
@@ -450,7 +468,7 @@ socket.on('save avatar', function(data, callback){
 });
 
 socket.on('save barvatar', function(data, callback){
-	connection.query("UPDATE users SET barvatar = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
+	connection.query("UPDATE " + tbl_users + " SET barvatar = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
         if(err != null) { console.log("Query error:" + err); } 
 		else {
 		users[socket.nickname].emit('system', {msg: "Your barvatar has been updated", nick: "system"});
@@ -460,7 +478,7 @@ socket.on('save barvatar', function(data, callback){
 });
 
 socket.on('save email', function(data, callback){
-	connection.query("UPDATE users SET email = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
+	connection.query("UPDATE " + tbl_users + " SET email = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
         if(err != null) { console.log("Query error:" + err); } 
 		else {
 		users[socket.nickname].emit('system', {msg: "Your email address has been updated", nick: "system"});
@@ -470,7 +488,7 @@ socket.on('save email', function(data, callback){
 });
 
 socket.on('save password', function(data, callback){
-	connection.query("UPDATE users SET password = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
+	connection.query("UPDATE " + tbl_users + " SET password = '" + data + "' WHERE username = '" + socket.nickname + "'", function(err){
         if(err != null) { console.log("Query error:" + err); } 
 		else {
 		users[socket.nickname].emit('system', {msg: "Your password has been updated", nick: "system"});
@@ -513,7 +531,7 @@ function keepalive() {
 var myVar=setInterval(function(){ fetchDB() },2000);
 function fetchDB()
 {
-var sql = "SELECT vu.username,vu.online,u.avatar FROM vw_users2 vu JOIN users u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+var sql = "SELECT vu.username,vu.online,u.avatar FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
 if(fetchDB.onlinecount == undefined){ fetchDB.onlinecount = 0; }
 var thisOnlineCount = 0;
 var userslist = [];
@@ -535,7 +553,7 @@ connection.query(sql, function(err, rows){
 		}
 	} 
 });
-connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM chat where timestamp > '" + lasttimestamp + "' order by timestamp desc limit 100", function(err, rows){
+connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM " + tbl_chat + " where timestamp > '" + lasttimestamp + "' order by timestamp desc limit 100", function(err, rows){
         if(err != null) {
             console.log(Timestamp() + "Query error:" + err);
         } else {
