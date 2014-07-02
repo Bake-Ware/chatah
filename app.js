@@ -47,11 +47,11 @@ server.listen(3000);
 // Database connection info==============================================================================
 function connect(){
 var connection = mysql.createConnection({
-  host     : '192.168.1.4',
+  host     : 'localhost',
   port : 3306,
   database: 'chat',
   user     : 'root',
-  password : 'ascent',
+  password : 'password',
 });
 return connection;
 }
