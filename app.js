@@ -12,6 +12,7 @@ var express = require('express'),
 	lastUser = "",
 	lastColor = "",
 	users = {},
+    ausers = {username:"",lastactivity:"",avatar:"",lastseen:""},
 	usedquestions = new Array(),
 	usedanswers = new Array(),
 	Colors = ["red","green","yellow","blue","magenta","cyan","white"],
@@ -21,20 +22,21 @@ var express = require('express'),
 	msgID = "",
 	timestamp = "",
 	avatar = "",
-    lastCommand = "";
+    lastCommand = "",
+    userslist = [];
 // Globals==============================================================================
 	
 // Configs==============================================================================
 var web_servername = "localhost",
-    web_port = "80",
+    web_port = "3000",
     web_upload_directory = "/uploads",
     web_upload_sizelimit = "900mb",
     web_upload_rootpath = "C:\\Program Files\\nodejs\\",
-    sql_servername = "localhost",
+    sql_servername = "bakeserver",
     sql_port = "3306",
     sql_database = "chat",
     sql_username = "root",
-    sql_password = "password",
+    sql_password = "ascent",
     tbl_chat = "chat",
     tbl_users = "users",
     tbl_memchat = "memchat",
@@ -216,7 +218,7 @@ console.log(Timestamp() + 'Authenticating user ' + data.nickname);
 	
 //Get history=================================================================================
 function getHistory(name){
-    connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM " + tbl_chat + " where timestamp >= TIMESTAMPADD(HOUR,-10,NOW()) order by timestamp desc limit 100", function(err, rows){
+    connection.query("SELECT *,date_format(timestamp,'%Y-%m-%d %T') as 'SafeDate' FROM " + tbl_chat + " order by timestamp desc limit 50", function(err, rows){ //where timestamp >= TIMESTAMPADD(HOUR,-10,NOW())
         if(err != null) {
             colog.error(Timestamp() + "Query error:" + err);
         } else {
@@ -258,8 +260,20 @@ socket.on('disconnect', function(data){
 });
 
 //User closes window==============================================================================
-	
-//Userlist update==============================================================================
+
+    //socket.emit("seen",$me,$lastSeen,$myavatar);
+
+socket.on('seen', function(data, callback){
+    io.sockets.emit("seen",{ username: data.username,id: data.id, avatar: data.avatar });
+});
+    
+//request user list===============================================================================
+//socket.on('get users', function(data, callback){
+//    callback(io.sockets.get_user_list());
+//});
+//request user list===============================================================================
+    
+//Userlist update=================================================================================
 function updateNicknames(){
     
 //    for (var socketId in io.sockets.sockets) {
@@ -267,9 +281,9 @@ function updateNicknames(){
 //        console.log(nickname);
 //    });
 //}
-    
+
 var sql = "SELECT vu.username,vu.online,u.avatar FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
-var userslist = [];
+//var userslist = [];
 connection.query(sql, function(err, rows){ 
 	if(err != null) { 
 		colog.error(Timestamp() + "Query error:" + err); 
