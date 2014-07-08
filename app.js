@@ -1,3 +1,20 @@
+// Configs==============================================================================
+var web_servername = "localhost",
+    web_port = "3000",
+    web_upload_directory = "/uploads",
+    web_upload_sizelimit = "900mb",
+    web_upload_rootpath = "C:\\Program Files\\nodejs\\",
+    sql_servername = "localhost",
+    sql_port = "3306",
+    sql_database = "chat",
+    sql_username = "root",
+    sql_password = "password",
+    tbl_chat = "chat",
+    tbl_users = "users",
+    tbl_memchat = "memchat",
+    tbl_userveiw = "vw_users2";
+    
+// Configs==============================================================================
 
 // Globals==============================================================================
 var express = require('express'),
@@ -25,24 +42,6 @@ var express = require('express'),
     lastCommand = "",
     userslist = [];
 // Globals==============================================================================
-	
-// Configs==============================================================================
-var web_servername = "localhost",
-    web_port = "3000",
-    web_upload_directory = "/uploads",
-    web_upload_sizelimit = "900mb",
-    web_upload_rootpath = "C:\\Program Files\\nodejs\\",
-    sql_servername = "localhost",
-    sql_port = "3306",
-    sql_database = "chat",
-    sql_username = "root",
-    sql_password = "password",
-    tbl_chat = "chat",
-    tbl_users = "users",
-    tbl_memchat = "memchat",
-    tbl_userveiw = "vw_users2";
-    
-// Configs==============================================================================
 
 //Start HTTP server==============================================================================
 server.listen(web_port);
