@@ -136,28 +136,6 @@ connection.query("INSERT INTO users (username,password,prefs,avatar,email,alive)
 	});
 });
 
-socket.on("plusone", function(data){
-connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
-		if(err != null) {
-			colog.error(Timestamp() + "Query error:" + err);
-		} else {
-		var newscore = rows[0].score++
-			connection.query("UPDATE " + tbl_users + " set score = " + newscore + " where username = '" + data + "'");
-		}
-		}
-)});
-
-socket.on("subone", function(data){
-connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
-		if(err != null) {
-			colog.error(Timestamp() + "Query error:" + err);
-		} else {
-		var newscore = rows[0].score--
-			connection.query("UPDATE " + tbl_users + " set score = " + newscore + " where username = '" + data + "'");
-		}
-		}
-)});
-
 socket.on('send command',function(data){
     console.log(Timestamp() + "Send Command recieved: " + data);
     lastCommand = data;
@@ -281,14 +259,14 @@ function updateNicknames(){
 //    });
 //}
 
-var sql = "SELECT vu.username,vu.online,u.avatar FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+var sql = "SELECT vu.username,vu.online,u.avatar,u.score FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
 //var userslist = [];
 connection.query(sql, function(err, rows){ 
 	if(err != null) { 
 		colog.error(Timestamp() + "Query error:" + err); 
 	} else { 
 		for(var i = 0; i < rows.length; i++){
-			userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar});
+			userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar, score: rows[i].score});
 		}
 		// console.log(userslist);
 		if(lastUserlist != userslist){		
@@ -301,7 +279,71 @@ connection.query(sql, function(err, rows){
 // connection.end();
 };
 //Userlist update==============================================================================
-	
+socket.on("delete", function(data){
+    connection.query("DELETE FROM " + tbl_chat + " where id = " + data + " LIMIT 1", function(err, rows){    
+    	if(err != null) {
+			colog.error(Timestamp() + "Query error:" + err);
+		} else {
+            io.sockets.emit("utility","$('#bubble" + data + "').html('*deleted*');");
+            connection.query("DELETE FROM " + tbl_memchat + " where id = " + data + " LIMIT 1", function(err, rows){    
+                if(err != null) {
+                    colog.error(Timestamp() + "Query error:" + err);
+                } else {
+
+                }   
+            });
+        }
+    });
+});
+    
+    
+    socket.on("plusone", function(data){
+connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
+		if(err != null) {
+			colog.error(Timestamp() + "Query error:" + err);
+		} else {
+		var newscore = rows[0].score + 1;
+			connection.query("UPDATE " + tbl_users + " set score = '" + newscore + "' where username = '" + data + "'");
+            var sql = "SELECT vu.username,vu.online,u.avatar,u.score FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+            connection.query(sql, function(err, rows){ 
+                if(err != null) { 
+                    colog.error(Timestamp() + "Query error:" + err); 
+                } else { 
+                    userslist = [];
+                    for(var i = 0; i < rows.length; i++){
+                        userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar, score: rows[i].score});
+                    }
+                        io.sockets.emit('usernames', userslist); //Object.keys(users));
+                } 
+            });
+		}
+});
+});
+
+socket.on("subone", function(data){
+connection.query("SELECT score FROM " + tbl_users + " where username = '" + data + "'", function(err, rows){
+		if(err != null) {
+			colog.error(Timestamp() + "Query error:" + err);
+		} else {
+		var newscore = rows[0].score - 1;
+			connection.query("UPDATE " + tbl_users + " set score = '" + newscore + "' where username = '" + data + "'");
+            var sql = "SELECT vu.username,vu.online,u.avatar,u.score FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+//var userslist = [];
+connection.query(sql, function(err, rows){ 
+	if(err != null) { 
+		colog.error(Timestamp() + "Query error:" + err); 
+	} else { 
+        userslist = [];
+		for(var i = 0; i < rows.length; i++){
+			userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar, score: rows[i].score});
+		}
+			io.sockets.emit('usernames', userslist); //Object.keys(users));
+	} 
+		});
+		}
+});
+    });
+    
 //upload image==============================================================================
 socket.on('upload image', function(data, callback){
 
@@ -544,7 +586,7 @@ function keepalive() {
 var myVar=setInterval(function(){ fetchDB() },2000);
 function fetchDB()
 {
-var sql = "SELECT vu.username,vu.online,u.avatar FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
+var sql = "SELECT vu.username,vu.online,u.avatar,u.score FROM " + tbl_userveiw + " vu JOIN " + tbl_users + " u ON u.username = vu.username WHERE vu.username != 'SYSTEM' AND vu.online > 0 ORDER BY vu.online";
 if(fetchDB.onlinecount == undefined){ fetchDB.onlinecount = 0; }
 var thisOnlineCount = 0;
 var userslist = [];
@@ -554,7 +596,7 @@ connection.query(sql, function(err, rows){
 		colog.error(Timestamp() + "Query error:" + err); 
 	} else { 
 		for(var i = 0; i < rows.length; i++){
-			userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar});
+			userslist.push({name: rows[i].username, online: rows[i].online, avatar: rows[i].avatar, score: rows[i].score});
 			thisOnlineCount += rows[i].online;
 		}
 		// console.log(userslist);

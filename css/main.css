@@ -164,8 +164,11 @@ background-color:#999;
 			overflow:hidden;
 		}
 		#users{
+/*
 			position:absolute;
 			top:61px; right:0px;
+*/
+            margin-top:61px;
 			border: 1px #000 solid;
 			padding:5px;
 			background-color:rgba(0,55,0,0.2);
@@ -206,7 +209,7 @@ background-color:#999;
 			text-align:right;
 			background-color:green;
 			border-radius:5px;
-			padding:5px 40px;
+			padding:0px 5px 0px 40px;
 			margin:3px;
 		}
 		.away{
